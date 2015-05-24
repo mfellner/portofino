@@ -1,9 +1,21 @@
 # Portofino
 Private Docker registry and secure proxy.
+[![build status](https://circleci.com/gh/mfellner/portofino.svg?style=svg)](https://circleci.com/gh/mfellner/portofino)
 
-## Usage
+## Description
 
-    ./portofino.sh (install|run|stop)
+Portofino is a private Docker registry with a secure NGINX reverse-proxy in front of it.
+It was designed to run on CoreOS but also works in other environments.
+
+## Quick start
+
+    export DOCKER_USER=mfellner
+    export PORTOFINO_URL=https://raw.githubusercontent.com/mfellner/portofino/master/portofino.sh
+    bash <(curl -sSL $PORTOFINO_URL) install start -y
+
+## Build from source
+
+    ./portofino.sh (build|start|stop|install|uninstall)
 
 ## Configuration
 

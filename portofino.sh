@@ -146,13 +146,21 @@ start_prompt() {
       local yn=$(ask_yes_no)
       if $yn; then do_stop else exit 1; fi
       ;;
+    install)
+      echo "Install Portofino private Docker registry?";
+      local yn=$(ask_yes_no)
+      if $yn; then do_install else exit 1; fi
+      ;;
     uninstall)
       echo "Uninstall Portofino private Docker registry?";
       local yn=$(ask_yes_no)
       if $yn; then do_uninstall else exit 1; fi
       ;;
+    -y)
+      # yes-flag
+      ;;
     *)
-      echo "Usage: portofino.sh (build|start|stop|uninstall)"
+      echo "Usage: portofino.sh (build|start|stop|install|uninstall)"
       exit 1
       ;;
   esac
@@ -167,22 +175,21 @@ install_prompt() {
 }
 
 ########################################
-# Install Portofino docker containers
+# Build docker images from source
 ########################################
 do_build() {
-  # Install Portofino Docker registry
-  #=====================================
-  local registry_dir="registry/"
-
-  install_prompt $REGISTRY_IMAGE $registry_dir
-
-  # Install Portofino nginx proxy
-  #=====================================
-  local nginx_dir="nginx/"
-
-  install_prompt $NGINX_IMAGE $nginx_dir
-
+  install_prompt $REGISTRY_IMAGE "registry/"
+  install_prompt $NGINX_IMAGE "nginx/"
   docker::cleanup
+}
+
+########################################
+# Install docker images from hub
+########################################
+do_install() {
+  echo "Downloading Portofino images..."
+  docker pull $REGISTRY_IMAGE:latest
+  docker pull $NGINX_IMAGE:latest
 }
 
 ########################################
@@ -243,7 +250,7 @@ require "docker"
 
 # Skip prompts if '-y' flag was set
 #=======================================
-if [ "$2" == "-y" ]; then
+if [[ $@ == *-y* ]]; then
   echo "Skip all prompt with 'yes'"
   readonly SKIP_YES=true
 else
@@ -261,4 +268,7 @@ readonly NGINX_PORT="5000" # Must be same as in Docker- and config-files.
 
 # Start Portofino script
 #=======================================
-start_prompt $1
+for var in "$@"
+do
+  start_prompt $var
+done

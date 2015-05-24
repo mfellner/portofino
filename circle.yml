@@ -5,18 +5,18 @@ machine:
   environment:
     HTPASSWD_USER: docker
     HTPASSWD_PASS: secret
+    REGISTRY_NAME: portofino
+    NGINX_NAME: portofino-proxy
 
 dependencies:
   override:
-    - docker build -t $DOCKER_USER/portofino ./registry
-    - docker build -t $DOCKER_USER/portofino-proxy ./nginx
+    - docker build -t $DOCKER_USER/$REGISTRY_NAME:latest ./registry
+    - docker build -t $DOCKER_USER/$NGINX_NAME:latest ./nginx
 
 test:
   override:
     - bash portofino.sh start -y; sleep 4:
         environment:
-          REGISTRY_NAME: portofino
-          NGINX_NAME: portofino-proxy
           SSL_COUNTRY: DE
           SSL_STATE: Berlin
           SSL_LOCATION: Berlin
@@ -30,4 +30,5 @@ deployment:
     branch: master
     commands:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push circleci/elasticsearch
+      - docker push $DOCKER_USER/$REGISTRY_NAME:latest
+      - docker push $DOCKER_USER/$NGINX_NAME:latest

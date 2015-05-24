@@ -47,6 +47,16 @@ docker::build() {
   docker build --rm -t $1 $2
 }
 
+docker::rmi() {
+  local image_exists=$(docker::image_exists $1)
+  if $image_exists; then
+    echo "uninstall "$1
+    docker rmi $1
+  else
+    echo $1" is not installed"
+  fi
+}
+
 docker::image_exists() {
   local count=$(docker images | grep -oc $1)
   if [ $count -gt 0 ]; then echo true; else echo false; fi
@@ -82,22 +92,28 @@ docker::stop_container() {
 
 start_prompt() {
   case $1 in
-    install)
-      echo "Build and install portofino private docker registry. Continue?";
+    build)
+      echo "Build and install Portofino private Docker registry. Continue?";
       local yn=$(ask_yes_no)
-      if $yn; then do_install else exit 1; fi
+      if $yn; then do_build else exit 1; fi
       ;;
-    run)
-      echo "Run portofino private docker registry?";
+    start)
+      echo "Start Portofino private Docker registry?";
       local yn=$(ask_yes_no)
       if $yn; then do_run else exit 1; fi
       ;;
     stop)
-      echo "Stopping docker containers..."
-      do_stop
+      echo "Stop Portofino private Docker registry?";
+      local yn=$(ask_yes_no)
+      if $yn; then do_stop else exit 1; fi
+      ;;
+    uninstall)
+      echo "Uninstall Portofino private Docker registry?";
+      local yn=$(ask_yes_no)
+      if $yn; then do_uninstall else exit 1; fi
       ;;
     *)
-      echo "Usage: portofino.sh (install|run|stop)"
+      echo "Usage: portofino.sh (build|start|stop|uninstall)"
       exit 1
       ;;
   esac
@@ -111,14 +127,6 @@ install_prompt() {
   fi
 }
 
-get_var_or_prompt() {
-  if [ -z "$$1" ]; then
-    echo $$1
-  else
-    echo "fuck"
-  fi
-}
-
 # Global Portofino variables
 #=======================================
 readonly registry_name="portofino"
@@ -128,7 +136,7 @@ readonly nginx_port="5000"
 ########################################
 # Install Portofino docker containers
 ########################################
-do_install() {
+do_build() {
   # Install Portofino Docker registry
   #=====================================
   local registry_dir="registry/"
@@ -146,9 +154,19 @@ do_install() {
 }
 
 ########################################
+# Uninstall Portofino docker containers
+########################################
+do_uninstall() {
+  do_stop
+  docker::rmi $registry_name
+  docker::rmi $nginx_name
+}
+
+########################################
 # Stop Portofino docker containers
 ########################################
 do_stop() {
+  echo "Stopping Docker containers..."
   docker::stop_container $registry_name
   docker::stop_container $nginx_name
 }

@@ -1,6 +1,6 @@
-# Portofino
+# Portofino [![build status](https://circleci.com/gh/mfellner/portofino.svg?style=svg)](https://circleci.com/gh/mfellner/portofino) [![GitHub license](https://img.shields.io/github/license/mfellner/portofino.svg?style=flat-square)](https://github.com/mfellner/portofino/blob/master/LICENSE)
+
 Private Docker registry and secure proxy.
-[![build status](https://circleci.com/gh/mfellner/portofino.svg?style=svg)](https://circleci.com/gh/mfellner/portofino)
 
 ## Description
 

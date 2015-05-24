@@ -5,12 +5,16 @@ require() {
 }
 
 ask_yes_no() {
-  select yn in "Yes" "No"; do
-      case $yn in
-        Yes ) echo true; break;;
-        No ) echo false; break;;
-      esac
-  done
+  if $SKIP_YES; then
+    echo true
+  else
+    select yn in "Yes" "No"; do
+        case $yn in
+          Yes ) echo true; break;;
+          No ) echo false; break;;
+        esac
+    done
+  fi
 }
 
 file_exists() {
@@ -161,8 +165,7 @@ do_run() {
       echo "Using ./portofino.cfg"
       source "./portofino.cfg"
     else
-      echo "No such file 'portofino.cfg'. Aborting."
-      exit 1
+      echo "Warning: no config-file 'portofino.cfg'"
     fi
 
     do_stop
@@ -188,5 +191,14 @@ do_run() {
 # Start Portofino script
 #=======================================
 require "docker"
+
+# Skip prompts if '-y' flag was set
+#=======================================
+if [ "$2" == "-y" ]; then
+  echo "Skip all prompt with 'yes'"
+  readonly SKIP_YES=true
+else
+  readonly SKIP_YES=false
+fi
 
 start_prompt $1

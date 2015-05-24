@@ -3,6 +3,8 @@ machine:
   services:
     - docker
   environment:
+    REGISTRY_NAME: ${DOCKER_USER}/portofino
+    NGINX_NAME: ${DOCKER_USER}/portofino-proxy
     HTPASSWD_USER: docker
     HTPASSWD_PASS: secret
     SSL_COUNTRY: DE
@@ -13,14 +15,13 @@ machine:
     SSL_COMMON_NAME: localhost
 
 dependencies:
-  cache_directories:
-  - "~/docker"
   override:
-    - bash portofino.sh build -y
+    - docker build -t $REGISTRY_NAME ./registry
+    - docker build -t $NGINX_NAME ./nginx
 
 test:
   override:
-    - bash portofino.sh -y; sleep 4
+    - bash portofino.sh start -y; sleep 4
     - curl --retry 2 --retry-delay 4 -ku $HTPASSWD_USER:$HTPASSWD_PASS https://localhost:5000/v2/
 
 deployment:

@@ -127,12 +127,6 @@ install_prompt() {
   fi
 }
 
-# Global Portofino variables
-#=======================================
-readonly registry_name="portofino"
-readonly nginx_name="portofino-proxy"
-readonly nginx_port="5000"
-
 ########################################
 # Install Portofino docker containers
 ########################################
@@ -206,7 +200,6 @@ do_run() {
   fi
 }
 
-# Start Portofino script
 #=======================================
 require "docker"
 
@@ -219,4 +212,21 @@ else
   readonly SKIP_YES=false
 fi
 
+# Set DOCKER_USER variable
+#=======================================
+if [ -z "$DOCKER_USER" ]; then
+  echo "Set \$DOCKER_USER to 'portofino'"
+  readonly DOCKER_USER="portofino"
+else
+  echo "Set \$DOCKER_USER to '$DOCKER_USER'"
+fi
+
+# Set global Portofino variables
+#=======================================
+readonly registry_name=$DOCKER_USER"/portofino"
+readonly nginx_name=$DOCKER_USER"/portofino-proxy"
+readonly nginx_port="5000" # Must be same as in Docker- and config-files.
+
+# Start Portofino script
+#=======================================
 start_prompt $1

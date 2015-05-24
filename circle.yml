@@ -8,19 +8,15 @@ machine:
 
 dependencies:
   override:
-    - docker build -t $REGISTRY_NAME ./registry:
-        environment:
-          REGISTRY_NAME: $DOCKER_USER/portofino
-    - docker build -t $NGINX_NAME ./nginx:
-        environment:
-          NGINX_NAME: $DOCKER_USER/portofino-proxy
+    - docker build -t $DOCKER_USER/portofino ./registry
+    - docker build -t $DOCKER_USER/portofino-proxy ./nginx
 
 test:
   override:
     - bash portofino.sh start -y; sleep 4:
         environment:
-          REGISTRY_NAME: $DOCKER_USER/portofino
-          NGINX_NAME: $DOCKER_USER/portofino-proxy
+          REGISTRY_NAME: portofino
+          NGINX_NAME: portofino-proxy
           SSL_COUNTRY: DE
           SSL_STATE: Berlin
           SSL_LOCATION: Berlin

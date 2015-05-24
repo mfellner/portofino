@@ -174,13 +174,13 @@ do_build() {
   #=====================================
   local registry_dir="registry/"
 
-  install_prompt $REGISTRY_NAME $registry_dir
+  install_prompt $REGISTRY_IMAGE $registry_dir
 
   # Install Portofino nginx proxy
   #=====================================
   local nginx_dir="nginx/"
 
-  install_prompt $NGINX_NAME $nginx_dir
+  install_prompt $NGINX_IMAGE $nginx_dir
 
   docker::cleanup
 }
@@ -190,8 +190,8 @@ do_build() {
 ########################################
 do_uninstall() {
   do_stop
-  docker::rmi $REGISTRY_NAME
-  docker::rmi $NGINX_NAME
+  docker::rmi $REGISTRY_IMAGE
+  docker::rmi $NGINX_IMAGE
 }
 
 ########################################
@@ -207,8 +207,8 @@ do_stop() {
 # Run Portofino docker containers
 ########################################
 do_run() {
-  local registry_exists=$(docker::image_exists $REGISTRY_NAME)
-  local nginx_exists=$(docker::image_exists $NGINX_NAME)
+  local registry_exists=$(docker::image_exists $REGISTRY_IMAGE)
+  local nginx_exists=$(docker::image_exists $NGINX_IMAGE)
 
   if $registry_exists && $nginx_exists; then
     if [ -f "./portofino.cfg" ]; then
@@ -219,7 +219,7 @@ do_run() {
     fi
 
     do_stop
-    docker run -d --name $REGISTRY_NAME $REGISTRY_NAME:latest && \
+    docker run -d --name $REGISTRY_NAME $REGISTRY_IMAGE:latest && \
     docker run -d \
                -e HTPASSWD_USER=$(get_var HTPASSWD_USER) \
                -e HTPASSWD_PASS=$(get_var HTPASSWD_PASS) \
@@ -232,9 +232,9 @@ do_run() {
                -p $NGINX_PORT:$NGINX_PORT \
                --link $REGISTRY_NAME:registry-alias \
                --name $NGINX_NAME \
-               $NGINX_NAME:latest
+               $NGINX_IMAGE:latest
   else
-    echo $REGISTRY_NAME" or "$NGINX_NAME" not installed. Aborting."
+    echo $REGISTRY_IMAGE" or "$NGINX_IMAGE" not installed. Aborting."
   fi
 }
 
@@ -253,8 +253,10 @@ fi
 # Set global Portofino variables
 #=======================================
 readonly DOCKER_USER=$(get_var_or_default "DOCKER_USER" "portofino")
-readonly REGISTRY_NAME=$(get_var_or_default "REGISTRY_NAME" $DOCKER_USER"/portofino")
-readonly NGINX_NAME=$(get_var_or_default "NGINX_NAME" $DOCKER_USER"/portofino-proxy")
+readonly REGISTRY_NAME=$(get_var_or_default "REGISTRY_NAME" "portofino")
+readonly NGINX_NAME=$(get_var_or_default "NGINX_NAME" "portofino-proxy")
+readonly REGISTRY_IMAGE=$DOCKER_USER/$REGISTRY_NAME
+readonly NGINX_IMAGE=$DOCKER_USER/$NGINX_NAME
 readonly NGINX_PORT="5000" # Must be same as in Docker- and config-files.
 
 # Start Portofino script

@@ -1,0 +1,31 @@
+machine:
+
+  services:
+    - docker
+  environment:
+    HTPASSWD_USER: docker
+    HTPASSWD_PASS: secret
+    SSL_COUNTRY: DE
+    SSL_STATE: Berlin
+    SSL_LOCATION: Berlin
+    SSL_ORGANISATION: Portofino
+    SSL_ORGANISATION_UNIT: Portofino
+    SSL_COMMON_NAME: localhost
+
+dependencies:
+  cache_directories:
+  - "~/docker"
+  override:
+    - bash portofino.sh build -y
+
+test:
+  override:
+    - bash portofino.sh -y; sleep 4
+    - curl --retry 2 --retry-delay 4 -ku $HTPASSWD_USER:$HTPASSWD_PASS https://localhost:5000/v2/
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push circleci/elasticsearch

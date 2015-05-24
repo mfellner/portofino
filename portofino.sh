@@ -21,6 +21,11 @@ file_exists() {
   if [ -f $1 ]; then echo true; else echo false; fi
 }
 
+#######################################
+# Prompt for a value from user input
+# Returns:
+#   The prompted value
+#######################################
 prompt() {
   >&2 echo $1
   while true; do
@@ -34,11 +39,37 @@ prompt() {
   done
 }
 
+#######################################
+# Return existing variable or prompt
+# Arguments:
+#   Name of the requested variable
+# Returns:
+#   The existing or prompted value
+#######################################
 get_var() {
   local test=${!1}
   if [ -z "$test" ]; then
     echo $(prompt "Enter $1: ")
   else
+    echo $test
+  fi
+}
+
+#######################################
+# Return existing variable or default
+# Arguments:
+#   Name of the requested variable
+#   Default value for the variable
+# Returns:
+#   The existing or default value
+#######################################
+get_var_or_default() {
+  local test=${!1}
+  if [ -z "$test" ]; then
+    >&2 echo "Set $1 to '$2'"
+    echo $2
+  else
+    >&2 echo "Set $1 to '$test'"
     echo $test
   fi
 }
@@ -90,6 +121,14 @@ docker::stop_container() {
   fi
 }
 
+docker::cleanup() {
+  echo "Cleaning up images..."
+  local images=$(docker images --no-trunc=true --filter dangling=true --quiet)
+  if [ ! -z "$images" ]; then
+    docker rmi $images
+  fi
+}
+
 start_prompt() {
   case $1 in
     build)
@@ -135,16 +174,15 @@ do_build() {
   #=====================================
   local registry_dir="registry/"
 
-  install_prompt $registry_name $registry_dir
+  install_prompt $REGISTRY_NAME $registry_dir
 
   # Install Portofino nginx proxy
   #=====================================
   local nginx_dir="nginx/"
 
-  install_prompt $nginx_name $nginx_dir
+  install_prompt $NGINX_NAME $nginx_dir
 
-  echo "Cleaning up images..."
-  docker rmi $(docker images --no-trunc=true --filter dangling=true --quiet)
+  docker::cleanup
 }
 
 ########################################
@@ -152,8 +190,8 @@ do_build() {
 ########################################
 do_uninstall() {
   do_stop
-  docker::rmi $registry_name
-  docker::rmi $nginx_name
+  docker::rmi $REGISTRY_NAME
+  docker::rmi $NGINX_NAME
 }
 
 ########################################
@@ -161,16 +199,16 @@ do_uninstall() {
 ########################################
 do_stop() {
   echo "Stopping Docker containers..."
-  docker::stop_container $registry_name
-  docker::stop_container $nginx_name
+  docker::stop_container $REGISTRY_NAME
+  docker::stop_container $NGINX_NAME
 }
 
 ########################################
 # Run Portofino docker containers
 ########################################
 do_run() {
-  local registry_exists=$(docker::image_exists $registry_name)
-  local nginx_exists=$(docker::image_exists $nginx_name)
+  local registry_exists=$(docker::image_exists $REGISTRY_NAME)
+  local nginx_exists=$(docker::image_exists $NGINX_NAME)
 
   if $registry_exists && $nginx_exists; then
     if [ -f "./portofino.cfg" ]; then
@@ -181,7 +219,7 @@ do_run() {
     fi
 
     do_stop
-    docker run -d --name $registry_name $registry_name:latest && \
+    docker run -d --name $REGISTRY_NAME $REGISTRY_NAME:latest && \
     docker run -d \
                -e HTPASSWD_USER=$(get_var HTPASSWD_USER) \
                -e HTPASSWD_PASS=$(get_var HTPASSWD_PASS) \
@@ -191,12 +229,12 @@ do_run() {
                -e SSL_ORGANISATION=$(get_var SSL_ORGANISATION) \
                -e SSL_ORGANISATION_UNIT=$(get_var SSL_ORGANISATION_UNIT) \
                -e SSL_COMMON_NAME=$(get_var SSL_COMMON_NAME) \
-               -p $nginx_port:$nginx_port \
-               --link $registry_name:registry-alias \
-               --name $nginx_name \
-               $nginx_name:latest
+               -p $NGINX_PORT:$NGINX_PORT \
+               --link $REGISTRY_NAME:registry-alias \
+               --name $NGINX_NAME \
+               $NGINX_NAME:latest
   else
-    echo $registry_name" or "$nginx_name" not installed. Aborting."
+    echo $REGISTRY_NAME" or "$NGINX_NAME" not installed. Aborting."
   fi
 }
 
@@ -212,20 +250,12 @@ else
   readonly SKIP_YES=false
 fi
 
-# Set DOCKER_USER variable
-#=======================================
-if [ -z "$DOCKER_USER" ]; then
-  echo "Set \$DOCKER_USER to 'portofino'"
-  readonly DOCKER_USER="portofino"
-else
-  echo "Set \$DOCKER_USER to '$DOCKER_USER'"
-fi
-
 # Set global Portofino variables
 #=======================================
-readonly registry_name=$DOCKER_USER"/portofino"
-readonly nginx_name=$DOCKER_USER"/portofino-proxy"
-readonly nginx_port="5000" # Must be same as in Docker- and config-files.
+readonly DOCKER_USER=$(get_var_or_default "DOCKER_USER" "portofino")
+readonly REGISTRY_NAME=$(get_var_or_default "REGISTRY_NAME" $DOCKER_USER"/portofino")
+readonly NGINX_NAME=$(get_var_or_default "NGINX_NAME" $DOCKER_USER"/portofino-proxy")
+readonly NGINX_PORT="5000" # Must be same as in Docker- and config-files.
 
 # Start Portofino script
 #=======================================

@@ -3,25 +3,30 @@ machine:
   services:
     - docker
   environment:
-    REGISTRY_NAME: ${DOCKER_USER}/portofino
-    NGINX_NAME: ${DOCKER_USER}/portofino-proxy
     HTPASSWD_USER: docker
     HTPASSWD_PASS: secret
-    SSL_COUNTRY: DE
-    SSL_STATE: Berlin
-    SSL_LOCATION: Berlin
-    SSL_ORGANISATION: Portofino
-    SSL_ORGANISATION_UNIT: Portofino
-    SSL_COMMON_NAME: localhost
 
 dependencies:
   override:
-    - docker build -t $REGISTRY_NAME ./registry
-    - docker build -t $NGINX_NAME ./nginx
+    - docker build -t $REGISTRY_NAME ./registry:
+      environment:
+        REGISTRY_NAME: $DOCKER_USER/portofino
+    - docker build -t $NGINX_NAME ./nginx:
+      environment:
+        NGINX_NAME: $DOCKER_USER/portofino-proxy
 
 test:
   override:
-    - bash portofino.sh start -y; sleep 4
+    - bash portofino.sh start -y; sleep 4:
+      environment:
+        REGISTRY_NAME: $DOCKER_USER/portofino
+        NGINX_NAME: $DOCKER_USER/portofino-proxy
+        SSL_COUNTRY: DE
+        SSL_STATE: Berlin
+        SSL_LOCATION: Berlin
+        SSL_ORGANISATION: Portofino
+        SSL_ORGANISATION_UNIT: Portofino
+        SSL_COMMON_NAME: localhost
     - curl --retry 2 --retry-delay 4 -ku $HTPASSWD_USER:$HTPASSWD_PASS https://localhost:5000/v2/
 
 deployment:

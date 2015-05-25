@@ -236,7 +236,8 @@ do_run() {
                -e SSL_ORGANISATION=$(get_var SSL_ORGANISATION) \
                -e SSL_ORGANISATION_UNIT=$(get_var SSL_ORGANISATION_UNIT) \
                -e SSL_COMMON_NAME=$(get_var SSL_COMMON_NAME) \
-               -p $NGINX_PORT:$NGINX_PORT \
+               -e SSL_EXPIRY=$(get_var SSL_EXPIRY) \
+               -p $NGINX_PORT:5000 \
                --link $REGISTRY_NAME:registry-alias \
                --name $NGINX_NAME \
                $NGINX_IMAGE:latest
@@ -264,7 +265,7 @@ readonly REGISTRY_NAME=$(get_var_or_default "REGISTRY_NAME" "portofino")
 readonly NGINX_NAME=$(get_var_or_default "NGINX_NAME" "portofino-proxy")
 readonly REGISTRY_IMAGE=$DOCKER_USER/$REGISTRY_NAME
 readonly NGINX_IMAGE=$DOCKER_USER/$NGINX_NAME
-readonly NGINX_PORT="5000" # Must be same as in Docker- and config-files.
+readonly NGINX_PORT=$(get_var_or_default "NGINX_PORT" "5000")
 
 # Start Portofino script
 #=======================================

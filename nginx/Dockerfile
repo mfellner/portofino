@@ -21,6 +21,7 @@ ENV SSL_LOCATION Berlin
 ENV SSL_ORGANISATION Portofino
 ENV SSL_ORGANISATION_UNIT Portofino
 ENV SSL_COMMON_NAME localhost
+ENV SSL_EXPIRY 9999
 
 ADD docker-run.sh docker-run.sh
 RUN chmod +x docker-run.sh

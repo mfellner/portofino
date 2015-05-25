@@ -18,7 +18,7 @@ readonly ssl_subj=\
 "/CN="${SSL_COMMON_NAME}
 
 openssl req -newkey rsa:4096 -nodes -keyout ${ssl_priv_dir}${ssl_file}.key \
-        -x509 -days 9999 -out ${ssl_cert_dir}${ssl_file}.crt \
+        -x509 -days ${SSL_EXPIRY} -out ${ssl_cert_dir}${ssl_file}.crt \
         -subj ${ssl_subj}
 
 nginx -g "daemon off;"

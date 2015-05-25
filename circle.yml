@@ -7,6 +7,7 @@ machine:
     HTPASSWD_PASS: secret
     REGISTRY_NAME: portofino
     NGINX_NAME: portofino-proxy
+    NGINX_PORT: 5000
 
 dependencies:
   override:
@@ -23,7 +24,8 @@ test:
           SSL_ORGANISATION: Portofino
           SSL_ORGANISATION_UNIT: Portofino
           SSL_COMMON_NAME: localhost
-    - curl --retry 2 --retry-delay 4 -ku $HTPASSWD_USER:$HTPASSWD_PASS https://localhost:5000/v2/
+          SSL_EXPIRY: 1
+    - curl --retry 2 --retry-delay 4 -ku $HTPASSWD_USER:$HTPASSWD_PASS https://localhost:$NGINX_PORT/v2/
 
 deployment:
   hub:

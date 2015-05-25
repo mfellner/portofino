@@ -20,6 +20,7 @@ Based on:
                -e SSL_ORGANISATION=Portofino \
                -e SSL_ORGANISATION_UNIT=Portofino \
                -e SSL_COMMON_NAME=localhost \
+               -e SSL_EXPIRY=9999 \
                -p 5000:5000 \
                --link portofino:registry-alias \
                --name portofino-proxy \

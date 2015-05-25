@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 
-source nginx/utils.sh
-
 require() {
   hash $1 2>/dev/null || { echo >&2 $1" is not installed. Aborting."; exit 1; }
 }
+
+file_exists() { if [ -f $1 ]; then echo true; else echo false; fi }
+
+dir_exists() { if [ -d $1 ]; then echo true; else echo false; fi }
+
+file_count() { echo $(ls -1 $@ 2> /dev/null | wc -l); }
 
 ask_yes_no() {
   if $SKIP_YES; then

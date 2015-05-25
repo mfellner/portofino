@@ -28,7 +28,6 @@ ENV SSL_EXPIRY 9999
 ENV SSL_CERTS_DIR /etc/portofino/certs
 
 # Add the run-script.
-ADD utils.sh utils.sh
 ADD docker-run.sh docker-run.sh
 RUN chmod +x docker-run.sh
 

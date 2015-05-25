@@ -41,3 +41,21 @@ Create a file `portofino.cfg` next to the script:
     SSL_EXPIRY="365"
 
 If you leave out any of the above variables, portofino.sh will prompt you for them.
+
+#### Notes for boot2docker users
+
+Follow these instructions to add a self-signed certificate to boot2docker's trusted CAs:
+https://github.com/boot2docker/boot2docker/issues/347#issuecomment-70950789
+
+#### Notes on self-signed certificates on CoreOS
+
+When using `docker login`, docker will inform the user if a certificate is unknown and suggest
+to add the file under a location /etc/docker/certs.d/domain:5000/ca.crt. However upon doing so,
+the login command yields the following error message instead:
+
+    FATA[0013] Error response from daemon: Server Error:
+    Post https://domain:5000/v1/users/: x509: certificate signed by unknown authority
+
+This suggests that the CA would have to be added to `/etc/ssl/certs/ca-certificates.crt`, which
+is not possible on a read-only filesystem. As of today, there seems to be no simple solution to
+this problem.

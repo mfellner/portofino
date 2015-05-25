@@ -1,23 +1,34 @@
 # Portofino [![build status](https://circleci.com/gh/mfellner/portofino.svg?style=svg)](https://circleci.com/gh/mfellner/portofino) [![GitHub license](https://img.shields.io/github/license/mfellner/portofino.svg?style=flat-square)](https://github.com/mfellner/portofino/blob/master/LICENSE)
 
-Private Docker registry and secure proxy.
-
-## Description
-
 Portofino is a private Docker registry with a secure NGINX reverse-proxy in front of it.
 It was designed to run on CoreOS but also works in other environments.
 
-## Quick start
+## Usage
 
-    export DOCKER_USER=mfellner
-    export PORTOFINO_URL=https://raw.githubusercontent.com/mfellner/portofino/master/portofino.sh
-    bash <(curl -sSL $PORTOFINO_URL) install start -y
+#### Quick start
 
-## Build from source
+    DOCKER_USER=mfellner bash <(curl -sSL https://raw.githubusercontent.com/mfellner/portofino/master/portofino.sh) install start -y
 
-    ./portofino.sh (build|start|stop|install|uninstall)
+#### Commands
+  * build: Build the Portofino Docker images from source.
+  * start: Starts the Portofino Docker containers.
+  * stop: Stops the Portofino Docker containers.
+  * install: Pulls the Portofino Docker images from the Docker Hub.
+  * uninstall: Removes the Portofino Docker images.
+  * `-y`: Skip all prompts with "yes"
 
-## Configuration
+#### Configuration
+
+You can set the following environment variables to configure portofino.sh:
+
+* `DOCKER_USER` Used as prefix for the Docker image names (default: "portofino")
+* `REGISTRY_NAME` Name of the registry image (default: "portofino")
+* `NGINX_NAME` Name of the nginx image (default: "portofino-proxy")
+* `NGINX_PORT` Exposed port of the nginx container (default: "5000")
+* `LOCAL_CERTS_DIR` Directory for persisting the SSL certificate and private key (default: "./certs")
+  ** See nginx/README.md for more details.
+
+#### Configuration
 
 Create a file `portofino.cfg` next to the script:
 

@@ -22,6 +22,7 @@ Based on:
                -e SSL_COMMON_NAME=localhost \
                -e SSL_EXPIRY=9999 \
                -p 5000:5000 \
+               -v /home/docker/certs:/etc/portofino/certs \
                --link portofino:registry-alias \
                --name portofino-proxy \
                portofino-proxy:latest
@@ -32,22 +33,25 @@ Explanation of environment variabes:
 * `HTPASSWD_PASS` is the password for HTTP basic authentication.
 * `SSL_*` are the fields for the self-signed SSL certificate.
 * `SSL_COMMON_NAME` must be the domain-name of your server.
+* `-v /home/docker/certs:`
+  ** Local directory to persist the SSL certificate and private key (optional).
+  ** You can provide an existing .crt and .key pair for your domain.
+  ** Otherwise, Portofino will create a self-signed certificate and place it in the directory.
+  ** If no `-v` volume is provided, the created certificate will not be persisted.
+* `--link`:
+  ** `portofino` is the name of the Portofino private Docker registry container.
+  ** `registry-alias` is the internally used alias for the registry container.
 
-Explanation of `--link` parameter:
-
-* `portofino` is the name of the Portofino private Docker registry container.
-* `registry-alias` is the internally used alias for the registry container.
-
-Test if you can reach your private Docker registry through the Nginx proxy:
+Test if you can reach your private Docker registry through the nginx proxy:
 
     curl -u docker:secret https://localhost:8080/v2/
 
     docker login https://localhost:8080
 
 * `docker:secret` is the username and password set in the `htpasswd` file.
-* `localhost` is the address of the server that your Nginx proxy is running on.
+* `localhost` is the address of the server that your nginx proxy is running on.
 
-## Provide your own files (not yet implemented)
+## Provide your own htpasswd (not yet supported), certificate and private key
 
 #### Generate basic authentication htpasswd file
 
@@ -57,12 +61,12 @@ Test if you can reach your private Docker registry through the Nginx proxy:
 
 #### Generate certificate
 
-    openssl req -newkey rsa:4096 -nodes -keyout certs/portofino.key \
-    -x509 -days 9999 -out certs/portofino.crt
+    openssl req -newkey rsa:4096 -nodes -keyout ~/certs/portofino.key \
+    -x509 -days 9999 -out ~/certs/portofino.crt
 
 * Creates a self-signed SSL certificate.
 
-#### GitHub issues
+## GitHub issues
 
 * https://github.com/docker/distribution/issues/452
 * https://github.com/docker/distribution/issues/397

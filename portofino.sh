@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source nginx/utils.sh
+
 require() {
   hash $1 2>/dev/null || { echo >&2 $1" is not installed. Aborting."; exit 1; }
 }
@@ -15,10 +17,6 @@ ask_yes_no() {
         esac
     done
   fi
-}
-
-file_exists() {
-  if [ -f $1 ]; then echo true; else echo false; fi
 }
 
 #######################################
@@ -60,16 +58,17 @@ get_var() {
 # Arguments:
 #   Name of the requested variable
 #   Default value for the variable
+#   Boolean: disable log output
 # Returns:
 #   The existing or default value
 #######################################
 get_var_or_default() {
   local test=${!1}
   if [ -z "$test" ]; then
-    >&2 echo "Set $1 to '$2'"
+    if $3; then >&2 echo "$1: '$2'"; fi
     echo $2
   else
-    >&2 echo "Set $1 to '$test'"
+    if $3; then >&2 echo "$1: '$test'"; fi
     echo $test
   fi
 }
@@ -79,8 +78,7 @@ docker::build() {
 }
 
 docker::rmi() {
-  local image_exists=$(docker::image_exists $1)
-  if $image_exists; then
+  if $(docker::image_exists $1); then
     echo "uninstall "$1
     docker rmi $1
   else
@@ -99,12 +97,9 @@ docker::container_exists() {
 }
 
 docker::should_install() {
-  local image_exists=$(docker::image_exists $1)
-
-  if $image_exists; then
+  if $(docker::image_exists $1); then
     >&2 echo $1" already installed. Re-install?";
-    local yn=$(ask_yes_no)
-    echo $yn
+    echo $(ask_yes_no)
   else
     >&2 echo $1" not yet installed.";
     echo true
@@ -112,8 +107,7 @@ docker::should_install() {
 }
 
 docker::stop_container() {
-  local container_runs=$(docker::container_exists $1)
-  if $container_runs; then
+  if $(docker::container_exists $1); then
     echo "kill "$1
     docker kill $1 && docker rm $1
   else
@@ -133,43 +127,36 @@ start_prompt() {
   case $1 in
     build)
       echo "Build and install Portofino private Docker registry. Continue?";
-      local yn=$(ask_yes_no)
-      if $yn; then do_build else exit 1; fi
+      if $(ask_yes_no); then do_build else exit 1; fi
       ;;
     start)
       echo "Start Portofino private Docker registry?";
-      local yn=$(ask_yes_no)
-      if $yn; then do_run else exit 1; fi
+      if $(ask_yes_no); then do_run else exit 1; fi
       ;;
     stop)
       echo "Stop Portofino private Docker registry?";
-      local yn=$(ask_yes_no)
-      if $yn; then do_stop else exit 1; fi
+      if $(ask_yes_no); then do_stop else exit 1; fi
       ;;
     install)
       echo "Install Portofino private Docker registry?";
-      local yn=$(ask_yes_no)
-      if $yn; then do_install else exit 1; fi
+      if $(ask_yes_no); then do_install else exit 1; fi
       ;;
     uninstall)
       echo "Uninstall Portofino private Docker registry?";
-      local yn=$(ask_yes_no)
-      if $yn; then do_uninstall else exit 1; fi
+      if $(ask_yes_no); then do_uninstall else exit 1; fi
       ;;
     -y)
       # yes-flag
       ;;
     *)
-      echo "Usage: portofino.sh (build|start|stop|install|uninstall)"
+      echo $USAGE
       exit 1
       ;;
   esac
 }
 
 install_prompt() {
-  local should_install=$(docker::should_install $1)
-
-  if $should_install; then
+  if $(docker::should_install $1); then
     docker::build $1 $2
   fi
 }
@@ -237,7 +224,9 @@ do_run() {
                -e SSL_ORGANISATION_UNIT=$(get_var SSL_ORGANISATION_UNIT) \
                -e SSL_COMMON_NAME=$(get_var SSL_COMMON_NAME) \
                -e SSL_EXPIRY=$(get_var SSL_EXPIRY) \
+               -e SSL_CERTS_DIR=$NGINX_CERTS_DIR \
                -p $NGINX_PORT:5000 \
+               -v $LOCAL_CERTS_DIR:$NGINX_CERTS_DIR \
                --link $REGISTRY_NAME:registry-alias \
                --name $NGINX_NAME \
                $NGINX_IMAGE:latest
@@ -248,6 +237,10 @@ do_run() {
 
 #=======================================
 require "docker"
+
+readonly USAGE="Usage: portofino.sh (build|start|stop|install|uninstall)"
+
+if [ -z "$@" ]; then echo $USAGE; exit 1; fi
 
 # Skip prompts if '-y' flag was set
 #=======================================
@@ -260,12 +253,27 @@ fi
 
 # Set global Portofino variables
 #=======================================
+echo "Set environment variables:"
 readonly DOCKER_USER=$(get_var_or_default "DOCKER_USER" "portofino")
 readonly REGISTRY_NAME=$(get_var_or_default "REGISTRY_NAME" "portofino")
 readonly NGINX_NAME=$(get_var_or_default "NGINX_NAME" "portofino-proxy")
+readonly NGINX_PORT=$(get_var_or_default "NGINX_PORT" "5000")
+readonly LOCAL_CERTS_DIR=$(get_var_or_default "LOCAL_CERTS_DIR" $(pwd)"/certs" false)
+readonly NGINX_CERTS_DIR="/etc/portofino/certs"
 readonly REGISTRY_IMAGE=$DOCKER_USER/$REGISTRY_NAME
 readonly NGINX_IMAGE=$DOCKER_USER/$NGINX_NAME
-readonly NGINX_PORT=$(get_var_or_default "NGINX_PORT" "5000")
+
+# Inspect local certificate directory.
+#=======================================
+if $(dir_exists $LOCAL_CERTS_DIR); then
+  if [ $(file_count $LOCAL_CERTS_DIR/{*.crt,*.key}) -gt 2 ]; then
+    echo "Ambiguous files in $LOCAL_CERTS_DIR. Aborting."; exit 1;
+  fi
+  echo "Using certificates from local directory "$LOCAL_CERTS_DIR;
+else
+  echo "Creating local certificate directory "$LOCAL_CERTS_DIR;
+  mkdir -p $LOCAL_CERTS_DIR
+fi
 
 # Start Portofino script
 #=======================================

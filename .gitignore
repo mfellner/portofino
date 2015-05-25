@@ -36,6 +36,6 @@ Temporary Items
 .Trash-*
 
 ### Portofino ###
-nginx/certs/
-nginx/*.htpasswd
+certs/
+*.htpasswd
 portofino.cfg

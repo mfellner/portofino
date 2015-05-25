@@ -28,8 +28,6 @@ You can set the following environment variables to configure portofino.sh:
 * `LOCAL_CERTS_DIR` Directory for persisting the SSL certificate and private key (default: "./certs")
   ** See nginx/README.md for more details.
 
-#### Configuration
-
 Create a file `portofino.cfg` next to the script:
 
     HTPASSWD_USER="docker"
@@ -40,5 +38,6 @@ Create a file `portofino.cfg` next to the script:
     SSL_ORGANISATION="Portofino"
     SSL_ORGANISATION_UNIT="Portofino"
     SSL_COMMON_NAME="localhost"
+    SSL_EXPIRY="365"
 
 If you leave out any of the above variables, portofino.sh will prompt you for them.
